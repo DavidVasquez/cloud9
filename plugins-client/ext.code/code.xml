@@ -29,7 +29,6 @@
 
       contextmenu       = "mnuCtxEditor"
       globalcommands    = "true"
-      debugger          = "{this.syntax == 'javascript' ? dbg : null}"
       readonly          = "{[@loading] || require('core/ide') || (location.host &amp;&amp; window.stDebugProcessRunning and stDebugProcessRunning.active &amp;&amp; [@scriptid])}"
     />
 
