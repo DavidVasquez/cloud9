@@ -12,6 +12,7 @@ var ext = require("core/ext");
 var settings = require("core/settings");
 var markup = require("text!ext/noderunner/noderunner.xml");
 var c9console = require("ext/console/console");
+var _debugger = require("ext/debugger/debugger");
 
 module.exports = ext.register("ext/noderunner/noderunner", {
     name    : "Node Runner",
@@ -49,7 +50,8 @@ module.exports = ext.register("ext/noderunner/noderunner", {
 
     onMessage : function(e) {
         var message = e.message;
-        //console.log("MSG", message)
+        if (message.type != "shell-data")
+            console.log("MSG", message)
 
         switch(message.type) {
             case "node-debug-ready":
@@ -142,7 +144,7 @@ module.exports = ext.register("ext/noderunner/noderunner", {
         });
 
         // the debugger needs to know that we are going to attach, but that its not a normal state message
-        // dbg.registerAutoAttach();
+        _debugger.registerAutoAttach();
         
         /**** END Moved from offline.js ****/
     },
@@ -158,7 +160,7 @@ module.exports = ext.register("ext/noderunner/noderunner", {
         var runner;
         
         // this is a manual action, so we'll tell that to the debugger
-        // dbg.registerManualAttach();
+        _debugger.registerManualAttach();
         if (stProcessRunning.active || typeof path != "string")
             return false;
 

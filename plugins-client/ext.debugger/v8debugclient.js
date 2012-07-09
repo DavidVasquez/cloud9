@@ -47,10 +47,9 @@ var v8DebugClient = exports.v8DebugClient = function(dbg, host) {
     };
     
     this.$connect = function(callback) {
-        if (this.state != "connected")
+        if (!this.$v8ds)
             this.$v8ds = new WSV8DebuggerService(ide.socket);
         
-        this.state = "connected";
         this.dispatchEvent("connect");
         callback.call(this);
     };
@@ -77,11 +76,12 @@ var v8DebugClient = exports.v8DebugClient = function(dbg, host) {
         var dbg = this.$debugger;
         this.$debugger = null;
 
-        var self = this;
+        var _self = this;
         this.$v8ds.detach(0, function(err) {
-            self.dispatchEvent("detach");
-            self.dispatchEvent("disconnect", {});
+            _self.dispatchEvent("detach");
+            _self.dispatchEvent("disconnect", {});
             callback && callback(err);
+            _self.$v8ds = null;
         });                
     };
     

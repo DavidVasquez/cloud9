@@ -15,7 +15,6 @@ var editors = require("ext/editors/editors");
 var dock   = require("ext/dockpanel/dockpanel");
 var commands = require("ext/commands/commands");
 var fs = require("ext/filesystem/filesystem");
-var noderunner = require("ext/noderunner/noderunner");
 var markup = require("text!ext/debugger/debugger.xml");
 var breakpoints = require("./breakpoints");
 var sources = require("./sources");
@@ -32,7 +31,7 @@ module.exports = ext.register("ext/debugger/debugger", {
     autodisable : ext.ONLINE | ext.LOCAL,
     markup  : markup,
     buttonClassName : "debug1",
-    deps    : [fs, noderunner],
+    deps    : [fs],
 
     nodesAll: [],
     nodes : [],
@@ -294,7 +293,7 @@ module.exports = ext.register("ext/debugger/debugger", {
         if (this.disabled) return;
 
         //stop debugging
-        require('ext/runpanel/runpanel').stop();
+        // require('ext/runpanel/runpanel').stop();
         this.deactivate();
 
         //loop from each item of the plugin and disable it
@@ -332,6 +331,21 @@ module.exports = ext.register("ext/debugger/debugger", {
     
     $onDebugProcessDeactivate : function() {
         this.$debugger.detach()
+    },
+    
+    /**
+     * If you are auto attaching, please announce yourself here
+     */
+    registerAutoAttach : function () {
+        this.autoAttachComingIn = true;
+    },
+
+    /**
+     * Manual click on the run button?
+     * Youll get special behavior!
+     */
+    registerManualAttach : function () {
+        this.autoAttachComingIn = false;
     },
     
     attach : function(tab) {
@@ -478,7 +492,7 @@ module.exports = ext.register("ext/debugger/debugger", {
         
         var emit = function () {
             _self.activeframe = _self.$mdlStack.queryNode("frame[1]");
-            // the active frame change will call the break itself
+            ide.dispatchEvent("break", _self.activeframe);
         };
         
         // if we've got the model passed in, it's fine

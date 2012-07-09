@@ -15,7 +15,6 @@ var editors = require("ext/editors/editors");
 var dock   = require("ext/dockpanel/dockpanel");
 var commands = require("ext/commands/commands");
 var fs = require("ext/filesystem/filesystem");
-var noderunner = require("ext/noderunner/noderunner");
 
 
 module.exports = {
