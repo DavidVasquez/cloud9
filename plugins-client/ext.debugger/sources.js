@@ -187,3 +187,41 @@ module.exports = {
 }
 
 });
+
+
+
+
+
+    this.$clearMarker = function () {
+        if (this.$marker) {
+            this.$editor.renderer.removeGutterDecoration(this.$lastRow[0], this.$lastRow[1]);
+            this.$editor.getSession().removeMarker(this.$marker);
+            this.$marker = null;
+        }
+    };
+
+    /**
+     * Indicates whether we are going to set a marker
+     */
+    this.$updateMarkerPrerequisite = function () {
+        return this.$debugger && this.$debugger.$updateMarkerPrerequisite();
+    };
+
+    this.$updateMarker = function (data) {
+        this.$clearMarker();
+        
+        if (!data) {
+            return;
+        }
+        
+        var row = data.line;
+
+        var range = new Range(row, 0, row + 1, 0);
+        this.$marker = this.$editor.getSession().addMarker(range, "ace_step", "line");
+        var type = "arrow";
+        this.$lastRow = [row, type];
+        this.$editor.renderer.addGutterDecoration(row, type);
+        this.$editor.gotoLine(row + 1, data.column, false);
+    };
+
+  

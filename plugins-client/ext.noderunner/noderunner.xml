@@ -1,28 +1,16 @@
 <a:application xmlns:a="http://ajax.org/2005/aml">
 
-   <!--  <a:debugger id="dbg"
-      state-running     = "stRunning"
-      state-attached    = "stAttached"
-      model-sources     = "mdlDbgSources"
-      model-stack       = "mdlDbgStack"
-      model-breakpoints = "mdlDbgBreakpoints" 
-      onbreak           = ""
-      oncontinue        = "" />
-    
-    <a:debughost id="dbgNode"
-      type            = "v8-ws"
-      autoinit        = "false"
-      model-tabs      = "mdlTabs"
-      state-connected = "stDebuggerConnected" />
-      
-    <a:debughost id="dbgChrome"
-      type     = "chrome-ws"
-      autoinit = "false"
-      model-tabs      = "mdlTabs"
-      state-connected = "stDebuggerConnected" /> -->
-
     <a:state id="stDebugProcessRunning" active="false" />
     <a:state id="stRunning" active="false" />
+    <code>
+    <a:state group="stRole" id="stUser" caption="You are a user" active="true" />
+    <a:state group="stRole" id="stAdmin" caption="You have super powers" />
+    <a:state group="stRole" id="stAdmine" caption="You have powers" />
+    
+    <a:label id="abc" value="{stRole.caption}" />
+    <a:button onclick="stAdmin.activate()">Become admin</a:button>
+    </code>
+
 
     <!--a:window id="winTab" 
       title     = "Choose a Tab"

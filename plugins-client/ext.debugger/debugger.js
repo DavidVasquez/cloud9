@@ -18,6 +18,7 @@ var fs = require("ext/filesystem/filesystem");
 var markup = require("text!ext/debugger/debugger.xml");
 var breakpoints = require("./breakpoints");
 var sources = require("./sources");
+var apfhook = require("./apfhook");
 
 require("ext/debugger/inspector");
 var v8debugclient = require("./v8debugclient");
@@ -39,6 +40,7 @@ module.exports = ext.register("ext/debugger/debugger", {
     hook : function(){
         var _self = this;
         breakpoints.init();
+        apfhook.registerDebugger(this);
 
         commands.addCommand({
             name: "resume",
@@ -196,18 +198,6 @@ module.exports = ext.register("ext/debugger/debugger", {
 
             return dbgVariable;
         });
-
-        dock.register(name, "dbgBreakpoints", {
-            menu : "Debugger/Breakpoints",
-            primary : {
-                backgroundImage: ide.staticPrefix + "/ext/main/style/images/debugicons.png",
-                defaultState: { x: -8, y: -88 },
-                activeState: { x: -8, y: -88 }
-            }
-        }, function(type) {
-            ext.initExtension(_self);
-            return dbgBreakpoints;
-        });
     },
 
     init : function(amlNode){
@@ -219,9 +209,9 @@ module.exports = ext.register("ext/debugger/debugger", {
         apf.setReference(modelName, model);
         // we're subsribing to the 'running active' prop
         // this property indicates whether the debugger is actually running (when on a break this value is false)
-        stRunning.addEventListener("prop.active", function (e) {
+        ide.addEventListener("debugger.changeState", function (e) {
             // if we are really running (so not on a break or something)
-            if (e.value) {
+            if (e.state != "stopped") {
                 // we clear out mdlDbgStack
                 mdlDbgStack.load("<frames></frames>");
             }
@@ -257,8 +247,8 @@ module.exports = ext.register("ext/debugger/debugger", {
             });
         });
 
-        stDebugProcessRunning.addEventListener("activate", this.$onDebugProcessActivate.bind(this));
-        stDebugProcessRunning.addEventListener("deactivate", this.$onDebugProcessDeactivate.bind(this));
+        ide.addEventListener("noderunner.startDebug", this.$onDebugProcessActivate.bind(this))
+        ide.addEventListener("noderunner.stopDebug", this.$onDebugProcessActivate.bind(this))
     },
     
     activate : function(){
@@ -438,12 +428,12 @@ module.exports = ext.register("ext/debugger/debugger", {
             };
             
             // depending on this flag we'll call either of these functions
-            if (_self.autoAttachComingIn) {
+            // if (_self.autoAttachComingIn) {
                 existingProcess();
-            }
-            else {
-                newProcess();
-            }
+            //}
+            //else {
+            //    newProcess();
+            //}
             
             // afterCompile and detach handlers are perfectly fine here
             dbgImpl.addEventListener("afterCompile", _self.$onAfterCompile.bind(_self));                            
@@ -476,8 +466,13 @@ module.exports = ext.register("ext/debugger/debugger", {
     },
 
     $onChangeRunning : function() {
-        var isRunning = this.$debugger && this.$debugger.isRunning();
-        stRunning.setProperty("active", isRunning);
+        if (!this.$debugger) {
+            this.state = null;
+        } else {
+            this.state = this.$debugger.isRunning() ? "running" : "stopped";
+        }
+        
+        ide.dispatchEvent("debugger.changeState", this)
     },
 
     $onBreak : function(e, stackModel) {
@@ -582,50 +577,6 @@ module.exports = ext.register("ext/debugger/debugger", {
 
     loadFrame : function(frame, callback) {
         this.$debugger.loadFrame(frame, callback);
-    },
-
-    toggleBreakpoint : function(script, row, content) {
-        var model = this.$mdlBreakpoints;
-        if (this.$debugger) {
-            this.$debugger.toggleBreakpoint(script, row, model, content);
-        }
-        else {
-            var scriptName = script.getAttribute("scriptname");
-            var bp = model.queryNode("breakpoint[@script='" + scriptName
-                + "' and @line='" + row + "']");
-            if (bp) {
-                apf.xmldb.removeNode(bp);
-            }
-            else {
-                // filename is something like blah/blah/workspace/realdir/file
-                // we are only interested in the part after workspace for display purposes
-                var tofind = "/workspace/";
-                var path = script.getAttribute("path");
-                var displayText = path;
-                if (path.indexOf(tofind) > -1) {
-                    displayText = path.substring(path.indexOf(tofind) + tofind.length);
-                }
-
-                var bp = apf.n("<breakpoint/>")
-                    .attr("script", scriptName)
-                    .attr("line", row)
-                    .attr("text", displayText + ":" + (parseInt(row, 10) + 1))
-                    .attr("lineoffset", 0)
-                    .attr("content", content)
-                    .attr("enabled", "true")
-                    .node();
-                model.appendXml(bp);
-            }
-        }
-    },
-
-    setBreakPointEnabled : function(node, value){
-        if (this.$debugger) {
-            this.$debugger.setBreakPointEnabled(node, value);
-        }
-        else {
-            node.setAttribute("enabled", value ? true : false);
-        }
     },
 
     continueScript : function(stepaction, stepcount, callback) {

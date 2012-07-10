@@ -58,21 +58,20 @@ module.exports = ext.register("ext/noderunner/noderunner", {
             case "php-debug-ready":
             case "python-debug-ready":
             case "ruby-debug-ready":
-                ide.dispatchEvent("debugready");
+                ide.dispatchEvent("debugready", message);
                 break;
 
             case "chrome-debug-ready":
                 winTab.show();
                 dbgChrome.loadTabs();
-                ide.dispatchEvent("debugready");
+                ide.dispatchEvent("debugready", message);
                 break;
 
             case "node-exit":
             case "php-exit":
             case "python-exit":
             case "ruby-exit":
-                stProcessRunning.deactivate();
-                stDebugProcessRunning.deactivate();
+                ide.dispatchEvent("debugexit", message);
                 break;
 
             case "state":
@@ -82,7 +81,7 @@ module.exports = ext.register("ext/noderunner/noderunner", {
                 stProcessRunning.setProperty("active", !!message.processRunning);
 
                 // dbgNode.setProperty("strip", message.workspaceDir + "/");
-                ide.dispatchEvent("noderunnerready");
+                ide.dispatchEvent("noderunnerready", message);
                 break;
 
             case "error":
@@ -131,26 +130,17 @@ module.exports = ext.register("ext/noderunner/noderunner", {
     },
 
     onConnect : function() {
-        ide.send({"command": "state"});
-            
-        /**** START Moved from offline.js ****/
-        
         // load the state, which is quite a weird name actually, but it contains
         // info about the debugger. The response is handled by 'noderunner.js'
         // who publishes info for the UI of the debugging controls based on this.
-        ide.send({
-            command: "state",
-            action: "publish"
-        });
+        ide.send({command: "state", action: "publish" });
 
         // the debugger needs to know that we are going to attach, but that its not a normal state message
-        _debugger.registerAutoAttach();
-        
-        /**** END Moved from offline.js ****/
+        _debugger.registerAutoAttach();        
     },
 
     onDisconnect : function() {
-        stDebugProcessRunning.deactivate();
+        ide.dispatchEvent("noderunner.stopDebugging")
     },
 
     debug : function() {
