@@ -1,17 +1,5 @@
 <a:application xmlns:a="http://ajax.org/2005/aml">
 
-    <a:state id="stDebugProcessRunning" active="false" />
-    <a:state id="stRunning" active="false" />
-    <code>
-    <a:state group="stRole" id="stUser" caption="You are a user" active="true" />
-    <a:state group="stRole" id="stAdmin" caption="You have super powers" />
-    <a:state group="stRole" id="stAdmine" caption="You have powers" />
-    
-    <a:label id="abc" value="{stRole.caption}" />
-    <a:button onclick="stAdmin.activate()">Become admin</a:button>
-    </code>
-
-
     <!--a:window id="winTab" 
       title     = "Choose a Tab"
       icon      = "chromium_16.png"

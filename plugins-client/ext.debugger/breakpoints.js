@@ -14,14 +14,15 @@ var ext = require("core/ext");
 var editors = require("ext/editors/editors");
 var dock   = require("ext/dockpanel/dockpanel");
 var commands = require("ext/commands/commands");
-var fs = require("ext/filesystem/filesystem");
 
 
 module.exports = {
-    init: function() {
+    hook: function() {
+        var _self = this;
+        // register model
         var modelName = "mdlDbgBreakpoints"
-        var model = apf.nameserver.register("model", modelName, new apf.model());
-        apf.setReference(modelName, model);
+        this.model = apf.nameserver.register("model", modelName, new apf.model());
+        apf.setReference(modelName, this.model);
         mdlDbgBreakpoints.load("<breakpoints/>");
         
         ide.addEventListener("settings.load", function (e) {
@@ -36,7 +37,8 @@ module.exports = {
             mdlDbgBreakpoints.load(bpFromIde);
         });
 
-        
+        // register dock panel
+        var name =  "ext/debugger/debugger";
         dock.register(name, "dbgBreakpoints", {
             menu : "Debugger/Breakpoints",
             primary : {
@@ -45,7 +47,7 @@ module.exports = {
                 activeState: { x: -8, y: -88 }
             }
         }, function(type) {
-            ext.initExtension(_self);
+            // ext.initExtension(_self);
             return dbgBreakpoints;
         });
         
@@ -56,9 +58,40 @@ module.exports = {
 
 
         }
-
         ide.addEventListener("afteropenfile", evHandler);
         ide.addEventListener("afterfilesave", evHandler);
+        ide.addEventListener("afterfilesave", evHandler);
+    },
+
+    init: function() {
+        var _self = this;
+        dbgBreakpoints.addEventListener("afterrender", function() {
+            lstBreakpoints.addEventListener("afterselect", function(e) {
+                if (e.selected) {
+                    _self.showBreakpoint(e.selected)
+                }
+            });
+            
+            lstBreakpoints.addEventListener("aftercheck", function(e) {
+                _self.setBreakPointEnabled(e.xmlNode, 
+                    apf.isTrue(e.xmlNode.getAttribute("enabled")));
+            });
+        });
+
+        dbgBreakpoints.addEventListener("dbInteractive", function(){
+            lstScripts.addEventListener("afterselect", function(e) {
+                e.selected && _self.showBreakpoint(e.selected);
+            });
+        });
+    },
+    
+    showBreakpoint: function(bp) {
+        var line = parseInt(bp.getAttribute("line"), 10);
+        var column = parseInt(bp.getAttribute("column"), 10);
+        if (isNaN(line)) line = null;
+        if (isNaN(column)) column = null;
+        scriptPath = bp.getAttribute("scriptPath");
+        
     },
 
     attachToEditor : function() {
@@ -83,7 +116,7 @@ module.exports = {
         this.$updateBreakpoints();
     },
     
-    $updateBreakpoints: function(doc) {
+    $updateBreakpoints: function() {
         doc = doc || this.$editor.getSession();
 
         var rows = [];

@@ -27,8 +27,19 @@ module.exports = ext.register("ext/noderunner/noderunner", {
 
     init : function(){
         var _self = this;
-        ide.addEventListener("socketConnect", this.onConnect.bind(this));
-        ide.addEventListener("socketDisconnect", this.onDisconnect.bind(this));
+        if (ide.connected) {
+            this.checkServerState();
+            ide.addEventListener("socketDisconnect", function() {
+                ide.dispatchEvent("noderunner.stopDebugging")
+                console.log("socketDisconnect")
+            });
+        } else {           
+            ide.addEventListener("socketConnect", function() {
+                self.checkServerState();
+                console.log("socketConnect")
+            });
+        }
+        
         ide.addEventListener("socketMessage", this.onMessage.bind(this));
 
         ide.addEventListener("consolecommand.run", function(e) {
@@ -77,8 +88,8 @@ module.exports = ext.register("ext/noderunner/noderunner", {
             case "state":
                 this.nodePid = message.processRunning || 0;
 
-                stDebugProcessRunning.setProperty("active", !!message.debugClient);
-                stProcessRunning.setProperty("active", !!message.processRunning);
+                // stDebugProcessRunning.setProperty("active", !!message.debugClient);
+                // stProcessRunning.setProperty("active", !!message.processRunning);
 
                 // dbgNode.setProperty("strip", message.workspaceDir + "/");
                 ide.dispatchEvent("noderunnerready", message);
@@ -124,23 +135,16 @@ module.exports = ext.register("ext/noderunner/noderunner", {
                     });
                 }
 
-                ide.send({"command": "state", "action": "publish"});
+                this.checkServerState()
                 break;
         }
     },
 
-    onConnect : function() {
+    checkServerState : function() {
         // load the state, which is quite a weird name actually, but it contains
         // info about the debugger. The response is handled by 'noderunner.js'
         // who publishes info for the UI of the debugging controls based on this.
         ide.send({command: "state", action: "publish" });
-
-        // the debugger needs to know that we are going to attach, but that its not a normal state message
-        _debugger.registerAutoAttach();        
-    },
-
-    onDisconnect : function() {
-        ide.dispatchEvent("noderunner.stopDebugging")
     },
 
     debug : function() {

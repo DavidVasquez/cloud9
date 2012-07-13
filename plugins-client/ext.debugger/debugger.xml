@@ -29,6 +29,12 @@
                   skin     = "c9-sidepanelsbutton"
                   command  = "stepout"
                   disabled = "{dbg.state != 'stopped'}" />
+                <a:divider skin="c9-divider" />
+                <!--<a:button id="btnStepThrough" tooltip="Step Through"
+                  icon     = "stepthrough.png" 
+                  skin     = "c9-sidepanelsbutton"
+                  command  = "stepout"
+                  disabled = "{dbg.state != 'stopped'}" />-->
             </a:hbox>
         </a:page>
     </a:tab>
@@ -44,7 +50,7 @@
               class      = "noscrollbar"
               scrollbar  = "sbShared 20 2 2"
               disabled   = "{dbg.state != 'stopped'}"
-              selected   = "{require('ext/debugger/debugger').activeframe}">
+              selected   = "{dbg.activeframe}">
                 <a:actions />
                 <a:each match="[frame]">
                     <a:column caption="Function" value="[@name]" width="60%" icon2="debugger/stckframe_obj.gif" />
@@ -149,6 +155,7 @@
               checked    = "[@enabled]">
                 <a:caption>
                     [@text]
+                    <a:remove match="[file|folder]" />
                     <div>[@content]</div>
                 </a:caption>
             </a:list>

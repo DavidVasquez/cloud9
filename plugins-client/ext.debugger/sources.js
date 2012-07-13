@@ -58,6 +58,10 @@ module.exports = {
             });
         });
         
+        ide.addEventListener("dbg.changeFrame", function(e) {
+            e.data && _self.showDebugFile(e.data.getAttribute("scriptid"));
+        });
+        
         this.paths = {};
     },
     

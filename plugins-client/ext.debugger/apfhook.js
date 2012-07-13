@@ -5,7 +5,6 @@
  * @license GPLv3 <http://www.gnu.org/licenses/gpl.txt>
  */
  
-// registers global objects needed for apf ui elements
 define(function(require, exports, module) {
 
 window.adbg = {
@@ -54,8 +53,21 @@ window.adbg = {
 
 
 module.exports = {
+    // registers global objects needed for apf ui elements
     registerDebugger: function(_debugger) {
-        window.dbg = _debugger;
+        if (window.dbg)
+            return;
+        new apf.state({
+            "id" : "dbg"
+        });
+        
+        ide.addEventListener("dbg.changeState", function(e) {
+            apf.xmldb.setAttribute(dbg, "state", e || false);
+        });
+        
+        ide.addEventListener("dbg.changeFrame", function(e) {
+            apf.xmldb.setAttribute(dbg, "state", e.activeFrame || false);
+        });
     }
 }
 

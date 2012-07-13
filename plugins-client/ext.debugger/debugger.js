@@ -39,7 +39,6 @@ module.exports = ext.register("ext/debugger/debugger", {
 
     hook : function(){
         var _self = this;
-        breakpoints.init();
         apfhook.registerDebugger(this);
 
         commands.addCommand({
@@ -198,18 +197,20 @@ module.exports = ext.register("ext/debugger/debugger", {
 
             return dbgVariable;
         });
+        breakpoints.hook();
     },
 
     init : function(amlNode){
         var _self = this;
-        sources.init();       
-        
+        sources.init();
+        breakpoints.init();
+
         var modelName = "mdlDbgStack";
         var model = apf.nameserver.register("model", modelName, new apf.model());
         apf.setReference(modelName, model);
         // we're subsribing to the 'running active' prop
         // this property indicates whether the debugger is actually running (when on a break this value is false)
-        ide.addEventListener("debugger.changeState", function (e) {
+        ide.addEventListener("dbg.changeState", function (e) {
             // if we are really running (so not on a break or something)
             if (e.state != "stopped") {
                 // we clear out mdlDbgStack
@@ -221,31 +222,7 @@ module.exports = ext.register("ext/debugger/debugger", {
         this.$mdlBreakpoints = mdlDbgBreakpoints;
         this.$mdlStack = mdlDbgStack;
 
-        //@todo move this to noderunner...
-        /* dbg.addEventListener("changeframe", function(e) {
-            e.data && _self.showDebugFile(e.data.getAttribute("scriptid"));
-        }); */
 
-        dbgBreakpoints.addEventListener("afterrender", function(){
-            lstBreakpoints.addEventListener("afterselect", function(e) {
-                if (e.selected && e.selected.getAttribute("scriptid"))
-                    _self.showDebugFile(e.selected.getAttribute("scriptid"),
-                        parseInt(e.selected.getAttribute("line"), 10) + 1);
-                // TODO sometimes we don't have a scriptID
-            });
-            
-            lstBreakpoints.addEventListener("aftercheck", function(e) {
-                dbg.setBreakPointEnabled(e.xmlNode, 
-                    apf.isTrue(e.xmlNode.getAttribute("enabled")));
-            });
-        });
-
-        dbgBreakpoints.addEventListener("dbInteractive", function(){
-            lstScripts.addEventListener("afterselect", function(e) {
-                e.selected && require("ext/debugger/debugger")
-                    .showDebugFile(e.selected.getAttribute("scriptid"));
-            });
-        });
 
         ide.addEventListener("noderunner.startDebug", this.$onDebugProcessActivate.bind(this))
         ide.addEventListener("noderunner.stopDebug", this.$onDebugProcessActivate.bind(this))
@@ -472,7 +449,7 @@ module.exports = ext.register("ext/debugger/debugger", {
             this.state = this.$debugger.isRunning() ? "running" : "stopped";
         }
         
-        ide.dispatchEvent("debugger.changeState", this)
+        ide.dispatchEvent("dbg.changeState", this)
     },
 
     $onBreak : function(e, stackModel) {
